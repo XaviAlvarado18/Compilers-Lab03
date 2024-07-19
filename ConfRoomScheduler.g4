@@ -7,13 +7,14 @@ stat: reserve                 # reserveStat
     |                         # blank
     ;
 
-reserve: 'RESERVAR' ID 'PARA' DATE 'DE' TIME 'A' TIME ; 
+reserve: 'RESERVA' USER 'SALA' ID 'PARA' DATE 'DE' TIME 'A' TIME ; 
 
 cancel: 'CANCELAR' ID 'PARA' DATE 'DE' TIME 'A' TIME ; 
 
 DATE: DIGIT DIGIT '/' DIGIT DIGIT '/' DIGIT DIGIT DIGIT DIGIT ; 
 TIME: DIGIT DIGIT ':' DIGIT DIGIT ; 
-ID  : [a-zA-Z0-9]+ ; 
+ID  : [0-9]+ ;
+USER: [a-zA-Z]+ ; 
 NEWLINE: '\r'? '\n' ; 
 WS  : [ \t]+ -> skip ; 
 

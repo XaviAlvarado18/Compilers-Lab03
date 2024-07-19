@@ -6,6 +6,8 @@ from ConfRoomSchedulerListener import ConfRoomSchedulerListener
 from datetime import datetime
 
 class ConfRoomSchedulerSemanticChecker(ConfRoomSchedulerListener):
+    MAX_DURATION = 120
+
     def __init__(self):
         self.reservations = {}  # Dict to keep track of active reservations
 
@@ -32,6 +34,10 @@ class ConfRoomSchedulerSemanticChecker(ConfRoomSchedulerListener):
         if not self.is_valid_time_range(start_time, end_time):
             print(f"Error: La hora de inicio {start_time} debe ser anterior a la hora de fin {end_time}")
             return
+        
+        if self.is_exceeding_max_duration(start_time, end_time):
+            print(f"Error: La reserva excede el tiempo maximo permitido de {self.MAX_DURATION} minutos")
+            return
 
         # Verificar solapamiento con reservas existentes
         if self.is_conflicting_reservation(id, date, start_time, end_time):
@@ -53,6 +59,15 @@ class ConfRoomSchedulerSemanticChecker(ConfRoomSchedulerListener):
         else:
             print(f"Error: No existe ninguna reserva para {id} el {date} de {start_time} a {end_time}")
 
+    def enterListStat(self, ctx):
+        if not self.reservations:
+            print("No hay reservas existentes")
+        else:
+            print("Reservas existentes: ")
+            for key, (id, user) in self.reservations.items():
+                _,date,start_time, end_time = key.split('_')
+                print(f"{id} para {date} de {start_time} a {end_time} por {user}")
+
     def enterBlank(self, ctx):
         # Ignorar líneas en blanco
         pass
@@ -69,6 +84,14 @@ class ConfRoomSchedulerSemanticChecker(ConfRoomSchedulerListener):
             return True
         except ValueError:
             return False
+        
+    def is_exceeding_max_duration(self, start_time, end_time):
+        fmt = '%H:%M'
+        start = datetime.strptime(start_time, fmt)
+        end = datetime.strptime(end_time,fmt)
+        duration = end - start
+        duration_minutes = duration.total_seconds() / 60
+        return duration_minutes > self.MAX_DURATION
 
     def is_conflicting_reservation(self, room_id, date, start_time, end_time):
         fmt = '%H:%M'

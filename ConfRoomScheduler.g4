@@ -1,6 +1,6 @@
 grammar ConfRoomScheduler;
 
-prog: (stat NEWLINE)* stat? ;
+prog: (stat NEWLINE)* stat ;
 
 stat: reserve                 # reserveStat
     | cancel                  # cancelStat

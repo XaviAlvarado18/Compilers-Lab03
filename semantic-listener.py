@@ -81,6 +81,46 @@ class ConfRoomSchedulerSemanticChecker(ConfRoomSchedulerListener):
                 _, date, start_time, end_time = key.split('_')
                 print(f"{id} para {date} de {start_time} a {end_time} por {user}")
 
+    def enterReprogramStat(self, ctx):
+        try:
+            id = ctx.reprogram().ID().getText()
+            date = ctx.reprogram().DATE().getText()
+            old_start_time = ctx.reprogram().TIME(0).getText()
+            old_end_time = ctx.reprogram().TIME(1).getText()
+            new_start_time = ctx.reprogram().TIME(2).getText()
+            new_end_time = ctx.reprogram().TIME(3).getText()
+        except AttributeError as e:
+            print(f"Error: Faltan datos en la reprogramación ({e})")
+            return
+
+        old_reservation_key = f"{id}_{date}_{old_start_time}_{old_end_time}"
+        new_reservation_key = f"{id}_{date}_{new_start_time}_{new_end_time}"
+
+        if old_reservation_key not in self.reservations:
+            print(f"Error: No existe ninguna reserva para {id} el {date} de {old_start_time} a {old_end_time}")
+            return
+
+        try:
+            new_start = datetime.strptime(new_start_time, '%H:%M').time()
+            new_end = datetime.strptime(new_end_time, '%H:%M').time()
+            reservation_date = datetime.strptime(date, '%d/%m/%Y')
+            reservation_start = datetime.combine(reservation_date, new_start)
+            reservation_end = datetime.combine(reservation_date, new_end)
+        except ValueError:
+            print(f"Error: La nueva hora de inicio '{new_start_time}' o fin '{new_end_time}' no es válida.")
+            return
+
+        if self.is_conflicting_reservation(id, date, reservation_start, reservation_end):
+            print(f"Error: La nueva reserva se solapa con otra reserva existente.")
+            return
+
+        # Eliminar la reserva antigua y agregar la nueva
+        user = self.reservations[old_reservation_key][1]  # Obtener el usuario antes de eliminar
+        del self.reservations[old_reservation_key]
+        self.reservations[new_reservation_key] = (id, user, reservation_start, reservation_end)
+
+        print(f"Reprogramado: {id} de {old_start_time} a {old_end_time} para {new_start_time} a {new_end_time}")
+
     def enterBlank(self, ctx):
         # Ignorar líneas en blanco
         pass
